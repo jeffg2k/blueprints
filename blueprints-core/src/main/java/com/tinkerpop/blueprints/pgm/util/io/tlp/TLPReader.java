@@ -105,8 +105,8 @@ public class TLPReader {
         try {
             int state = 0; // 0=topology, 1=properties
             String property = null;
-            String nodedefault = "";
-            String edgedefault = "";
+            String nodeDefault = "";
+            String edgeDefault = "";
             boolean cancel = false;
             while (reader.ready() && !cancel) {
                 String line = reader.readLine();
@@ -133,16 +133,16 @@ public class TLPReader {
                             }
                             if (property != null) {
                                 if (tokens[0].equals(TLPTokens.DEFAULT) && tokens.length > 2) {
-                                    nodedefault = tokens[1];
-                                    edgedefault = tokens[2];
+                                    nodeDefault = tokens[1];
+                                    edgeDefault = tokens[2];
                                 } else if (tokens[0].equals(TLPTokens.NODEPROPERTY) && tokens.length > 1) {
                                     //Node
                                     Vertex node = graph.getVertex(tokens[1]);
                                     String value;
                                     if (tokens.length < 3 || tokens[2] == null || tokens[2].length() == 0) {
-                                        value = nodedefault;
+                                        value = nodeDefault;
                                     } else {
-                                        value = tokens[2];
+                                        value = tokens[2].replaceAll("\"", "");
                                     }
                                     node.setProperty(property, value);
                                 } else if (tokens[0].equals(TLPTokens.EDGE) && tokens.length > 1) {
@@ -150,9 +150,9 @@ public class TLPReader {
                                     Edge edge = graph.getEdge(tokens[1]);
                                     String value;
                                     if (tokens.length < 3 || tokens[2] == null || tokens[2].length() == 0) {
-                                        value = edgedefault;
+                                        value = edgeDefault;
                                     } else {
-                                        value = tokens[2];
+                                        value = tokens[2].replaceAll("\"", "");
                                     }
                                     edge.setProperty(property, value);
                                 }
