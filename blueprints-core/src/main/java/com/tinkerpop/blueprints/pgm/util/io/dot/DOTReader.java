@@ -16,8 +16,8 @@ import java.nio.charset.Charset;
  * <p/>
  *
  * @author Jeff Gentes
- * @author Stuart Hendren (http://stuarthendren.net)
- * @author Mathieu Bastian <mathieu.bastian@gephi.org>
+ * @author Stuart Hendren (http://stuarthendren.net) Templated Blueprint GMLParser
+ * @author Mathieu Bastian <mathieu.bastian@gephi.org> Templated Gephi DOTImporter
  */
 
 public class DOTReader {
@@ -66,6 +66,30 @@ public class DOTReader {
      */
     public void inputGraph(InputStream inputStream) throws IOException {
         inputGraph(inputStream, DEFAULT_BUFFER_SIZE);
+    }
+
+
+    /**
+     * Load the DOT file into the Graph.
+     *
+     * @param graph       to receive the data
+     * @param inputStream DOT file
+     * @throws IOException thrown if the data is not valid
+     */
+    public static void inputGraph(Graph graph, InputStream inputStream) throws IOException {
+        inputGraph(graph, inputStream, DEFAULT_LABEL);
+    }
+
+    /**
+     * Load the DOT file into the Graph.
+     *
+     * @param graph            to receive the data
+     * @param inputStream      DOT file
+     * @param defaultEdgeLabel default edge label to be used if not defined in the data
+     * @throws IOException thrown if the data is not valid
+     */
+    public static void inputGraph(Graph graph, InputStream inputStream, String defaultEdgeLabel) throws IOException {
+        new DOTReader(graph, defaultEdgeLabel).inputGraph(inputStream, DEFAULT_BUFFER_SIZE);
     }
 
     /**
@@ -287,28 +311,5 @@ public class DOTReader {
             return graph.addVertex(id);
         }
         return graph.getVertex(id);
-    }
-
-    /**
-     * Load the DOT file into the Graph.
-     *
-     * @param graph       to receive the data
-     * @param inputStream DOT file
-     * @throws IOException thrown if the data is not valid
-     */
-    public static void inputGraph(Graph graph, InputStream inputStream) throws IOException {
-        inputGraph(graph, inputStream, DEFAULT_LABEL);
-    }
-
-    /**
-     * Load the DOT file into the Graph.
-     *
-     * @param graph            to receive the data
-     * @param inputStream      DOT file
-     * @param defaultEdgeLabel default edge label to be used if not defined in the data
-     * @throws IOException thrown if the data is not valid
-     */
-    public static void inputGraph(Graph graph, InputStream inputStream, String defaultEdgeLabel) throws IOException {
-        new DOTReader(graph, defaultEdgeLabel).inputGraph(inputStream, DEFAULT_BUFFER_SIZE);
     }
 }
