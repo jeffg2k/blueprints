@@ -161,6 +161,10 @@ public class DOTReader {
                     directed = st.sval.equalsIgnoreCase(DOTTokens.DIRECTED);
 
                     st.nextToken();
+                    if (st.ttype == StreamTokenizer.TT_WORD) {
+                        //graphName = st.sval;
+                        st.nextToken();
+                    }
 
                     while (st.ttype != '{') {
                         st.nextToken();
@@ -172,24 +176,11 @@ public class DOTReader {
                 }
             }
         }
-
-        while (hasNext(st)) {
-            int type = st.ttype;
-            if (notLineBreak(type) && type == StreamTokenizer.TT_WORD) {
-                String value = st.sval;
-                if (DOTTokens.GRAPH.equalsIgnoreCase(value)) {
-                    parseGraph(st);
-                    if (!hasNext(st)) {
-                        return;
-                    }
-                }
-            }
-        }
-        throw new IOException("Graph not complete");
     }
 
     private void parseGraph(StreamTokenizer st) throws IOException {
-        while (hasNext(st)) {
+        do {
+            st.nextToken();
             String key = st.sval;
             if (key == null || key.equalsIgnoreCase(DOTTokens.GRAPH) || key.equalsIgnoreCase(DOTTokens.NODE)
                     || key.equalsIgnoreCase(DOTTokens.EDGE)) {
@@ -205,13 +196,11 @@ public class DOTReader {
                     nodeAttributes(st, node);
                 }
             }
-        }
-        throw new IOException("Graph not complete");
+        } while (st.ttype != StreamTokenizer.TT_EOF);
     }
 
     protected void edgeStructure(StreamTokenizer st, final Vertex node) throws IOException {
         st.nextToken();
-
         Edge edge = null;
         if (st.ttype == '>' || st.ttype == '-') {
             st.nextToken();
@@ -331,7 +320,7 @@ public class DOTReader {
                 }
             } else {
                 // other attributes
-                String attributeName =  st.sval;
+                String attributeName = st.sval;
                 st.nextToken();
                 if (st.ttype == '=') {
                     st.nextToken();
@@ -375,7 +364,7 @@ public class DOTReader {
                     if (st.ttype == StreamTokenizer.TT_WORD || st.ttype == '"') {
                         edge.setProperty(BlueprintsTokens.LABEL, st.sval);
                     } else {
-                       st.pushBack();
+                        st.pushBack();
                     }
                 } else {
                     st.pushBack();
@@ -405,7 +394,8 @@ public class DOTReader {
                 st.nextToken();
                 if (st.ttype == '=') {
                     st.nextToken();
-                    if (st.ttype == StreamTokenizer.TT_WORD || st.ttype == '"'); else {
+                    if (st.ttype == StreamTokenizer.TT_WORD || st.ttype == '"') ;
+                    else {
                         edge.setProperty(BlueprintsTokens.STYLE, st.sval);
                     }
                 } else {
