@@ -4,9 +4,11 @@ import com.tinkerpop.blueprints.pgm.Edge;
 import com.tinkerpop.blueprints.pgm.Graph;
 import com.tinkerpop.blueprints.pgm.TransactionalGraph;
 import com.tinkerpop.blueprints.pgm.Vertex;
+import com.tinkerpop.blueprints.pgm.util.io.BlueprintsTokens;
 
 import javax.xml.stream.*;
 import javax.xml.stream.events.XMLEvent;
+import java.awt.*;
 import java.io.*;
 import java.nio.charset.Charset;
 
@@ -227,9 +229,18 @@ public class GEXFReader {
 
         for (int i = 0; i < reader.getAttributeCount(); i++) {
             String attName = reader.getAttributeName(i).getLocalPart();
-            if (!GEXFTokens.NODE_ID.equalsIgnoreCase(attName)) {
+            if (!attName.equalsIgnoreCase(GEXFTokens.NODE_ID)) {
                 String attValue = reader.getAttributeValue(i);
-                node.setProperty(attName, attValue);
+                if (attName.equalsIgnoreCase(GEXFTokens.LABEL)) {
+                    node.setProperty(BlueprintsTokens.LABEL, attValue);
+                } else if (attName.equalsIgnoreCase(GEXFTokens.COLOR)) {
+                    Color color = readColor(reader);
+                    node.setProperty(BlueprintsTokens.COLOR, color.getRGB());
+                } else if (attName.equalsIgnoreCase(GEXFTokens.POS)) {
+                    readNodePosition(reader, node);
+                } else {
+                    node.setProperty(attName, attValue);
+                }
             }
         }
 
@@ -267,7 +278,7 @@ public class GEXFReader {
                 target = reader.getAttributeValue(i);
             } else if (GEXFTokens.EDGE_ID.equalsIgnoreCase(attName)) {
                 id = reader.getAttributeValue(i);
-            } else if (GEXFTokens.EDGE_LABEL.equalsIgnoreCase(attName)) {
+            } else if (GEXFTokens.LABEL.equalsIgnoreCase(attName)) {
                 label = reader.getAttributeValue(i);
             }
         }
@@ -281,7 +292,7 @@ public class GEXFReader {
             return;
         }
         if (directed) {
-            edge.setProperty(GEXFTokens.DIRECTED, directed);
+            edge.setProperty(BlueprintsTokens.DIRECTED, directed);
         }
         //Attributes
         for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -289,13 +300,101 @@ public class GEXFReader {
             if (!GEXFTokens.EDGE_SOURCE.equalsIgnoreCase(attName)
                     && !GEXFTokens.EDGE_TARGET.equalsIgnoreCase(attName)
                     && !GEXFTokens.EDGE_ID.equalsIgnoreCase(attName)
-                    && !GEXFTokens.EDGE_LABEL.equalsIgnoreCase(attName)) {
+                    && !GEXFTokens.LABEL.equalsIgnoreCase(attName)) {
                 String value = reader.getAttributeValue(i);
-                edge.setProperty(attName, value);
+                if (GEXFTokens.COLOR.equalsIgnoreCase(attName)) {
+                    Color color = readColor(reader);
+                    edge.setProperty(BlueprintsTokens.COLOR, color.getRGB());
+                } else if (GEXFTokens.EDGE_WEIGHT.equalsIgnoreCase(attName)) {
+                    edge.setProperty(BlueprintsTokens.WEIGHT, value);
+                } else if (GEXFTokens.EDGE_TYPE.equalsIgnoreCase(attName)) {
+                    edge.setProperty(BlueprintsTokens.TYPE, value);
+                } else {
+                    edge.setProperty(attName, value);
+                }
             }
         }
     }
 
+    public static Color readColor(XMLStreamReader reader) {
+        String rStr = "";
+        String gStr = "";
+        String bStr = "";
+        String aStr = "";
+
+        for (int i = 0; i < reader.getAttributeCount(); i++) {
+            String attName = reader.getAttributeName(i).getLocalPart();
+            if ("r".equalsIgnoreCase(attName)) {
+                rStr = reader.getAttributeValue(i);
+            } else if ("g".equalsIgnoreCase(attName)) {
+                gStr = reader.getAttributeValue(i);
+            } else if ("b".equalsIgnoreCase(attName)) {
+                bStr = reader.getAttributeValue(i);
+            } else if ("a".equalsIgnoreCase(attName)) {
+                aStr = reader.getAttributeValue(i);
+            }
+        }
+
+        int r = (rStr.isEmpty()) ? 0 : Integer.parseInt(rStr);
+        int g = (gStr.isEmpty()) ? 0 : Integer.parseInt(gStr);
+        int b = (bStr.isEmpty()) ? 0 : Integer.parseInt(bStr);
+        float a = (aStr.isEmpty()) ? 0 : Float.parseFloat(aStr); //not used
+        if(r < 0 || r > 255) {
+            r=128;
+        }
+        if(g < 0 || g > 255) {
+            g=128;
+        }
+        if(b < 0 || b > 255) {
+            r=128;
+        }
+        if(a < 0f || a > 1f) {
+            r=255;
+        }
+
+        return new Color(r, g, b);
+    }
+
+    private void readNodePosition(XMLStreamReader reader, Vertex node) {
+        String xStr = "";
+        String yStr = "";
+        String zStr = "";
+
+        for (int i = 0; i < reader.getAttributeCount(); i++) {
+            String attName = reader.getAttributeName(i).getLocalPart();
+            if ("x".equalsIgnoreCase(attName)) {
+                xStr = reader.getAttributeValue(i);
+            } else if ("y".equalsIgnoreCase(attName)) {
+                yStr = reader.getAttributeValue(i);
+            } else if ("z".equalsIgnoreCase(attName)) {
+                zStr = reader.getAttributeValue(i);
+            }
+        }
+
+        if (!xStr.isEmpty()) {
+           float x = Float.parseFloat(xStr);
+           node.setProperty(BlueprintsTokens.X, x);
+        }
+        if (!yStr.isEmpty()) {
+            float y = Float.parseFloat(yStr);
+            node.setProperty(BlueprintsTokens.Y, y);
+        }
+        if (!zStr.isEmpty()) {
+            float z = Float.parseFloat(zStr);
+            node.setProperty(BlueprintsTokens.Z, z);
+        }
+    }
+
+    private void readNodeSize(XMLStreamReader reader, Vertex node) {
+        String attName = reader.getAttributeName(0).getLocalPart();
+        if (GEXFTokens.SIZE.equalsIgnoreCase(attName)) {
+            String sizeStr = reader.getAttributeValue(0);
+            if (!sizeStr.isEmpty()) {
+               float size = Float.parseFloat(sizeStr);
+               node.setProperty(BlueprintsTokens.SIZE, size);
+            }
+        }
+    }
 }
 
 

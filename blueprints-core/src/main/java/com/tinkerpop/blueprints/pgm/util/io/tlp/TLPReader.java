@@ -4,8 +4,13 @@ import com.tinkerpop.blueprints.pgm.Edge;
 import com.tinkerpop.blueprints.pgm.Graph;
 import com.tinkerpop.blueprints.pgm.TransactionalGraph;
 import com.tinkerpop.blueprints.pgm.Vertex;
+import com.tinkerpop.blueprints.pgm.util.io.BlueprintsTokens;
 
-import java.io.*;
+import java.awt.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 
@@ -144,7 +149,21 @@ public class TLPReader {
                                     } else {
                                         value = tokens[2].replaceAll("\"", "");
                                     }
-                                    node.setProperty(property, value);
+                                    if (property.equalsIgnoreCase(TLPTokens.LABEL)) {
+                                        node.setProperty(BlueprintsTokens.LABEL, value);
+                                    } else if (property.equalsIgnoreCase(TLPTokens.COLOR)) {
+                                        String[] parseVal = value.replace("(", "").replace(")","").split(",");
+                                        Color color = new Color(128,128,128);
+                                        if (parseVal.length > 3) {
+                                            color = new Color(Integer.parseInt(parseVal[0]), Integer.parseInt(parseVal[1]), Integer.parseInt(parseVal[2]), Integer.parseInt(parseVal[3]));
+                                            node.setProperty(BlueprintsTokens.COLOR, color.getRGB());
+                                        } else if (parseVal.length > 2) {
+                                            color = new Color(Integer.parseInt(parseVal[0]), Integer.parseInt(parseVal[1]), Integer.parseInt(parseVal[2]));
+                                            node.setProperty(BlueprintsTokens.COLOR, color.getRGB());
+                                        }
+                                    } else {
+                                        node.setProperty(property, value);
+                                    }
                                 } else if (tokens[0].equals(TLPTokens.EDGE) && tokens.length > 1) {
                                     //Edge
                                     Edge edge = graph.getEdge(tokens[1]);
@@ -154,7 +173,21 @@ public class TLPReader {
                                     } else {
                                         value = tokens[2].replaceAll("\"", "");
                                     }
-                                    edge.setProperty(property, value);
+                                    if (property.equalsIgnoreCase(TLPTokens.LABEL)) {
+                                        edge.setProperty(BlueprintsTokens.LABEL, value);
+                                    }  else if (property.equalsIgnoreCase(TLPTokens.COLOR)) {
+                                        String[] parseVal = value.replace("(", "").replace(")","").split(",");
+                                        Color color = new Color(128,128,128);
+                                        if (parseVal.length > 3) {
+                                            color = new Color(Integer.parseInt(parseVal[0]), Integer.parseInt(parseVal[1]), Integer.parseInt(parseVal[2]), Integer.parseInt(parseVal[3]));
+                                            edge.setProperty(BlueprintsTokens.COLOR, color.getRGB());
+                                        } else if (parseVal.length > 2) {
+                                            color = new Color(Integer.parseInt(parseVal[0]), Integer.parseInt(parseVal[1]), Integer.parseInt(parseVal[2]));
+                                            edge.setProperty(BlueprintsTokens.COLOR, color.getRGB());
+                                        }
+                                    } else {
+                                        edge.setProperty(property, value);
+                                    }
                                 }
                             }
                         }

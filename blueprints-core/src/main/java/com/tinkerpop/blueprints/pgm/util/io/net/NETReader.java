@@ -4,6 +4,7 @@ import com.tinkerpop.blueprints.pgm.Edge;
 import com.tinkerpop.blueprints.pgm.Graph;
 import com.tinkerpop.blueprints.pgm.TransactionalGraph;
 import com.tinkerpop.blueprints.pgm.Vertex;
+import com.tinkerpop.blueprints.pgm.util.io.BlueprintsTokens;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -126,7 +127,7 @@ public class NETReader {
             for (int i = 0; i < num_vertices; i++) {
                 String label = "" + (i + 1);
                 Vertex node = graph.addVertex(label);
-                node.setProperty(NETTokens.LABEL, label);
+                node.setProperty(BlueprintsTokens.LABEL, label);
             }
 
             curLine = null;
@@ -232,7 +233,7 @@ public class NETReader {
 
         // only attach the label if there's one to attach
         if (label != null && label.length() > 0) {
-            node.setProperty(NETTokens.LABEL, label);
+            node.setProperty(BlueprintsTokens.LABEL, label);
         }
 
         // parse the rest of the line
@@ -243,8 +244,8 @@ public class NETReader {
                 try {
                     float x = Float.parseFloat(parts[i]);
                     float y = Float.parseFloat(parts[i + 1]);
-                    node.setProperty(NETTokens.X, x);
-                    node.setProperty(NETTokens.Y, y);
+                    node.setProperty(BlueprintsTokens.X, x);
+                    node.setProperty(BlueprintsTokens.Y, y);
                     i++;
                 } catch (Exception e) {
                     System.err.println("importerNET_error_dataformat5");
@@ -255,7 +256,7 @@ public class NETReader {
             if (i < parts.length - 1) {
                 try {
                     float size = Float.parseFloat(parts[i]);
-                    node.setProperty(NETTokens.SIZE, size);
+                    node.setProperty(BlueprintsTokens.SIZE, size);
                     i++;
                 } catch (Exception e) {
                     System.err.println("importerNET_error_dataformat6");
@@ -267,12 +268,12 @@ public class NETReader {
                 // node's internal color
                 if (NETTokens.ICCOLOR.equals(parts[i])) {
                     //String colorName = parts[i + 1].replaceAll(" ", ""); // remove spaces from color's name so we can look it up
-                    node.setProperty(NETTokens.ICCOLOR, parts[i + 1]);
+                    node.setProperty(BlueprintsTokens.COLOR, parts[i + 1]);
                     break;
                 }
                 if (NETTokens.BCCOLOR.equals(parts[i])) {
                     //String colorName = parts[i + 1].replaceAll(" ", ""); // remove spaces from color's name so we can look it up
-                    node.setProperty(NETTokens.BCCOLOR, parts[i + 1]);
+                    node.setProperty(BlueprintsTokens.COLOR2, parts[i + 1]);
                     break;
                 }
             }
@@ -343,13 +344,13 @@ public class NETReader {
                         System.err.println("importerNET_error_dataformat7");
                     }
 
-                    edge.setProperty(NETTokens.WEIGHT, edgeWeight);
+                    edge.setProperty(BlueprintsTokens.WEIGHT, edgeWeight);
                 }
                 if (st.hasMoreTokens()) {
                     String key = st.nextToken();
                     if (key.equalsIgnoreCase(NETTokens.ECOLOR)) {
                         String value = st.nextToken();
-                        edge.setProperty(NETTokens.ECOLOR, value);
+                        edge.setProperty(BlueprintsTokens.COLOR, value);
                     }
                 }
             }

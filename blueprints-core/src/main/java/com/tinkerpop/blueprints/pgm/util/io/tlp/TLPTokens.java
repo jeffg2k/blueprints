@@ -18,6 +18,8 @@ public class TLPTokens {
     public static final String EDGE = "(edge";
     public static final String PROPERTY = "(property";
     public static final String COMMENT_CHAR = ";";
+    public static final String LABEL = "viewLabel";
+    public static final String COLOR = "viewColor";
 
     /**
      * Special token used to store Blueprint ids as they may not be integers

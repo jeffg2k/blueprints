@@ -4,7 +4,9 @@ import com.tinkerpop.blueprints.pgm.Edge;
 import com.tinkerpop.blueprints.pgm.Graph;
 import com.tinkerpop.blueprints.pgm.TransactionalGraph;
 import com.tinkerpop.blueprints.pgm.Vertex;
+import com.tinkerpop.blueprints.pgm.util.io.BlueprintsTokens;
 
+import java.awt.*;
 import java.io.*;
 import java.nio.charset.Charset;
 
@@ -32,7 +34,6 @@ public class DOTReader {
     private boolean directed = false;
 
     private int edgeCount = 0;
-
 
     /**
      * Create a new DOT reader
@@ -224,7 +225,7 @@ public class DOTReader {
                         Object edgeId = edgeCount++;
                         edge = graph.addEdge(edgeId, node, getOrCreateNode("" + st.sval), defaultEdgeLabel);
                         if (directed) {
-                            edge.setProperty(DOTTokens.DIRECTED, directed);
+                            edge.setProperty(BlueprintsTokens.DIRECTED, directed);
                         }
                     }
                 }
@@ -233,7 +234,7 @@ public class DOTReader {
                 Object edgeId = edgeCount++;
                 edge = graph.addEdge(edgeId, node, getOrCreateNode("" + st.sval), defaultEdgeLabel);
                 if (directed) {
-                    edge.setProperty(DOTTokens.DIRECTED, directed);
+                    edge.setProperty(BlueprintsTokens.DIRECTED, directed);
                 }
             }
         } else {
@@ -259,17 +260,89 @@ public class DOTReader {
             return;
         } else if (st.ttype == StreamTokenizer.TT_WORD) {
             // attributes
-            String attributeName = st.sval;
-            st.nextToken();
-            if (st.ttype == '=') {
+            if (st.sval.equalsIgnoreCase(DOTTokens.LABEL)) {
                 st.nextToken();
-                if (st.ttype == StreamTokenizer.TT_WORD || st.ttype == '"') {
-                    node.setProperty(attributeName, st.sval);
+                if (st.ttype == '=') {
+                    st.nextToken();
+                    if (st.ttype == StreamTokenizer.TT_WORD || st.ttype == '"') {
+                        node.setProperty(BlueprintsTokens.LABEL, st.sval);
+                    } else {
+                        st.pushBack();
+                    }
+                } else {
+                    st.pushBack();
+                }
+            } else if (st.sval.equalsIgnoreCase(DOTTokens.COLOR)) {
+                st.nextToken();
+                if (st.ttype == '=') {
+                    st.nextToken();
+                    if (st.ttype == StreamTokenizer.TT_WORD || st.ttype == '"') {
+                        if (DOTTokens.containsColor(st.sval)) {
+                            node.setProperty(BlueprintsTokens.COLOR, DOTTokens.getColorFromName(st.sval));
+                        } else {
+                            try {
+                                String[] colors = st.sval.split(" ");
+                                Color nodeColor = new Color(Float.parseFloat(colors[0]), Float.parseFloat(colors[1]), Float.parseFloat(colors[2]));
+                                node.setProperty(BlueprintsTokens.COLOR, nodeColor.getRGB());
+                            } catch (Exception e) {
+                            }
+                        }
+                    } else {
+                        st.pushBack();
+                    }
+                } else {
+                    st.pushBack();
+                }
+            } else if (st.sval.equalsIgnoreCase(DOTTokens.POS)) {
+                st.nextToken();
+                if (st.ttype == '=') {
+                    st.nextToken();
+                    if (st.ttype == StreamTokenizer.TT_WORD || st.ttype == '"') {
+                        try {
+                            String[] positions = st.sval.split(",");
+                            if (positions.length == 2) {
+                                node.setProperty(BlueprintsTokens.X, Float.parseFloat(positions[0]));
+                                node.setProperty(BlueprintsTokens.Y, Float.parseFloat(positions[1]));
+
+                            } else if (positions.length == 3) {
+                                node.setProperty(BlueprintsTokens.X, Float.parseFloat(positions[0]));
+                                node.setProperty(BlueprintsTokens.Y, Float.parseFloat(positions[1]));
+                                node.setProperty(BlueprintsTokens.Z, Float.parseFloat(positions[2]));
+                            }
+                        } catch (Exception e) {
+                        }
+                    } else {
+                        st.pushBack();
+                    }
+                } else {
+                    st.pushBack();
+                }
+            } else if (st.sval.equalsIgnoreCase(DOTTokens.STYLE)) {
+                st.nextToken();
+                if (st.ttype == '=') {
+                    st.nextToken();
+                    if (st.ttype == StreamTokenizer.TT_WORD || st.ttype == '"') {
+                        node.setProperty(BlueprintsTokens.STYLE, st.sval);
+                    } else {
+                        st.pushBack();
+                    }
                 } else {
                     st.pushBack();
                 }
             } else {
-                st.pushBack();
+                // other attributes
+                String attributeName =  st.sval;
+                st.nextToken();
+                if (st.ttype == '=') {
+                    st.nextToken();
+                    if (st.ttype == StreamTokenizer.TT_WORD || st.ttype == '"') {
+                        node.setProperty(attributeName, st.sval);
+                    } else {
+                        st.pushBack();
+                    }
+                } else {
+                    st.pushBack();
+                }
             }
         }
         nodeAttributes(st, node);
@@ -293,6 +366,69 @@ public class DOTReader {
             } else {
                 st.pushBack();
             }
+
+
+            if (st.sval.equalsIgnoreCase(DOTTokens.LABEL)) {
+                st.nextToken();
+                if (st.ttype == '=') {
+                    st.nextToken();
+                    if (st.ttype == StreamTokenizer.TT_WORD || st.ttype == '"') {
+                        edge.setProperty(BlueprintsTokens.LABEL, st.sval);
+                    } else {
+                       st.pushBack();
+                    }
+                } else {
+                    st.pushBack();
+                }
+            } else if (st.sval.equalsIgnoreCase(DOTTokens.COLOR)) {
+                st.nextToken();
+                if (st.ttype == '=') {
+                    st.nextToken();
+                    if (st.ttype == StreamTokenizer.TT_WORD || st.ttype == '"') {
+                        if (DOTTokens.containsColor(st.sval)) {
+                            edge.setProperty(BlueprintsTokens.COLOR, DOTTokens.getColorFromName(st.sval));
+                        } else {
+                            try {
+                                String[] colors = st.sval.split(" ");
+                                Color edgeColor = new Color(Float.parseFloat(colors[0]), Float.parseFloat(colors[1]), Float.parseFloat(colors[2]));
+                                edge.setProperty(BlueprintsTokens.COLOR, edgeColor.getRGB());
+                            } catch (Exception e) {
+                            }
+                        }
+                    } else {
+                        st.pushBack();
+                    }
+                } else {
+                    st.pushBack();
+                }
+            } else if (st.sval.equalsIgnoreCase(DOTTokens.STYLE)) {
+                st.nextToken();
+                if (st.ttype == '=') {
+                    st.nextToken();
+                    if (st.ttype == StreamTokenizer.TT_WORD || st.ttype == '"'); else {
+                        edge.setProperty(BlueprintsTokens.STYLE, st.sval);
+                    }
+                } else {
+                    st.pushBack();
+                }
+            } else if (st.sval.equalsIgnoreCase(DOTTokens.WEIGHT)) {
+                st.nextToken();
+                if (st.ttype == '=') {
+                    st.nextToken();
+                    if (st.ttype == StreamTokenizer.TT_WORD || st.ttype == '"') {
+                        try {
+                            Float weight = Float.parseFloat(st.sval);
+                            edge.setProperty(BlueprintsTokens.WEIGHT, weight);
+                        } catch (Exception e) {
+                        }
+                    } else {
+                        st.pushBack();
+                    }
+                } else {
+                    st.pushBack();
+                }
+            }
+
         }
         edgeAttributes(st, edge);
     }
@@ -312,4 +448,5 @@ public class DOTReader {
         }
         return graph.getVertex(id);
     }
+
 }
