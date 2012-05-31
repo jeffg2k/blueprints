@@ -456,38 +456,38 @@ public class TransactionalGraphTestSuite extends TestSuite {
         }
         if (graph.getFeatures().supportsEdgeIteration)
             assertEquals(count(graph.getEdges()), 5);
-        assertEquals(5,v.getEdges(Direction.BOTH));
+        assertEquals(5,count(v.getEdges(Direction.BOTH)));
         graph.stopTransaction(Conclusion.FAILURE);
         
         if (graph.getFeatures().supportsEdgeIteration)
             assertEquals(count(graph.getEdges()), 0);
         v = graph.getVertex(v.getId());
-        assertEquals(0,v.getEdges(Direction.BOTH));
+        assertEquals(0,count(v.getEdges(Direction.BOTH)));
         for (int i = 0; i < 4; i++) {
             graph.addEdge(null, v, graph.addVertex(null), convertId(graph, "test"));
         }
         if (graph.getFeatures().supportsEdgeIteration)
             assertEquals(count(graph.getEdges()), 4);
-        assertEquals(4,v.getEdges(Direction.BOTH));
+        assertEquals(4,count(v.getEdges(Direction.BOTH)));
         graph.stopTransaction(Conclusion.FAILURE);
 
         if (graph.getFeatures().supportsEdgeIteration)
             assertEquals(count(graph.getEdges()), 0);
         v = graph.getVertex(v.getId());
-        assertEquals(0,v.getEdges(Direction.BOTH));
+        assertEquals(0,count(v.getEdges(Direction.BOTH)));
 
         for (int i = 0; i < 3; i++) {
             graph.addEdge(null, v, graph.addVertex(null), convertId(graph, "test"));
         }
         if (graph.getFeatures().supportsEdgeIteration)
             assertEquals(count(graph.getEdges()), 3);
-        assertEquals(3,v.getEdges(Direction.BOTH));
+        assertEquals(3,count(v.getEdges(Direction.BOTH)));
         graph.stopTransaction(Conclusion.SUCCESS);
 
         if (graph.getFeatures().supportsEdgeIteration)
             assertEquals(count(graph.getEdges()), 3);
         v = graph.getVertex(v.getId());
-        assertEquals(3,v.getEdges(Direction.BOTH));
+        assertEquals(3,count(v.getEdges(Direction.BOTH)));
 
         graph.shutdown();
     }
