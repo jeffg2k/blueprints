@@ -1,4 +1,4 @@
-package com.tinkerpop.blueprints.pgm.util.io.dot;
+package com.tinkerpop.blueprints.util.io.dot;
 
 import java.awt.*;
 import java.util.HashMap;

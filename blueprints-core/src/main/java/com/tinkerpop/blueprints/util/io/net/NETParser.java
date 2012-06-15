@@ -1,118 +1,59 @@
-package com.tinkerpop.blueprints.pgm.util.io.net;
+package com.tinkerpop.blueprints.util.io.net;
 
-import com.tinkerpop.blueprints.pgm.Edge;
-import com.tinkerpop.blueprints.pgm.Graph;
-import com.tinkerpop.blueprints.pgm.TransactionalGraph;
-import com.tinkerpop.blueprints.pgm.Vertex;
-import com.tinkerpop.blueprints.pgm.util.io.BlueprintsTokens;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Graph;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.util.io.BlueprintsTokens;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.StringTokenizer;
 
-/**
- * A reader for the Pajek Graph Format (net).
- * <p/>
- * NET definition taken from
- * (https://gephi.org/users/supported-graph-formats/pajek-net-format/)
- * <p/>
- *
- * @author Jeff Gentes
- * @author Mathieu Bastian - Templated Gephi NETImporter
- */
-public class NETReader {
-    public static final String DEFAULT_LABEL = "undefined";
+public class NETParser {
+    /**
+     * <Mapped ID String, ID Object>
+     */
+    //private final Map<Object, Object> vertexIdMap = new HashMap<Object, Object>();
 
-    private static final int DEFAULT_BUFFER_SIZE = 1000;
+    private final Map<Object, Object> vertexMappedIdMap = new HashMap<Object, Object>();
+
+    private final String defaultEdgeLabel;
 
     private final Graph graph;
 
-    private final String defaultEdgeLabel;
+    private final String vertexIdKey;
+
+    private final String edgeIdKey;
+
+    private final String edgeLabelKey;
+
+    private boolean directed = false;
 
     private boolean cancel = false;
 
     private int edgeCount = 0;
 
-    /**
-     * Create a new NET reader
-     * <p/>
-     * (Uses default edge label DEFAULT_LABEL)
-     *
-     * @param graph the graph to load data into
-     */
-    public NETReader(Graph graph) {
-        this(graph, DEFAULT_LABEL);
-    }
-
-    /**
-     * Create a new NET reader
-     *
-     * @param graph            the graph to load data into
-     * @param defaultEdgeLabel the default edge label to be used if the NET edge does not define a label
-     */
-    public NETReader(Graph graph, String defaultEdgeLabel) {
+    public NETParser(final Graph graph, final String defaultEdgeLabel, final String vertexIdKey, final String edgeIdKey,
+                     final String edgeLabelKey) {
         this.graph = graph;
+        this.vertexIdKey = vertexIdKey;
+        this.edgeIdKey = edgeIdKey;
+        this.edgeLabelKey = edgeLabelKey;
         this.defaultEdgeLabel = defaultEdgeLabel;
     }
 
-    /**
-     * Read the NET from from the stream.
-     * <p/>
-     * If the file is malformed incomplete data can be loaded.
-     *
-     * @param inputStream NET file
-     * @throws java.io.IOException thrown if the data is not valid
-     */
-    public void inputGraph(InputStream inputStream) throws IOException {
-        inputGraph(inputStream, DEFAULT_BUFFER_SIZE);
-    }
+    public void parse(final BufferedReader reader) throws IOException {
 
-    /**
-     * Load the NET file into the Graph.
-     *
-     * @param graph       to receive the data
-     * @param inputStream NET file
-     * @throws IOException thrown if the data is not valid
-     */
-    public static void inputGraph(Graph graph, InputStream inputStream) throws IOException {
-        inputGraph(graph, inputStream, DEFAULT_LABEL);
-    }
-
-    /**
-     * Load the NET file into the Graph.
-     *
-     * @param graph            to receive the data
-     * @param inputStream      NET file
-     * @param defaultEdgeLabel default edge label to be used if not defined in the data
-     * @throws IOException thrown if the data is not valid
-     */
-    public static void inputGraph(Graph graph, InputStream inputStream, String defaultEdgeLabel) throws IOException {
-        new NETReader(graph, defaultEdgeLabel).inputGraph(inputStream, DEFAULT_BUFFER_SIZE);
-    }
-
-    /**
-     * Read the NET from from the stream.
-     * <p/>
-     * If the file is malformed incomplete data can be loaded.
-     *
-     * @param inputStream NET file
-     * @throws IOException thrown if the data is not valid
-     */
-    public void inputGraph(InputStream inputStream, int bufferSize) throws IOException {
-        int previousMaxBufferSize = 0;
-        if (graph instanceof TransactionalGraph) {
-            previousMaxBufferSize = ((TransactionalGraph) graph).getMaxBufferSize();
-            ((TransactionalGraph) graph).setMaxBufferSize(bufferSize);
-        }
-
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, Charset.forName("ISO-8859-1")));
         try {
-
             // ignore everything until we see '*Vertices'
-            String curLine = skip(reader, NETTokens.NODES);
+            String curLine = null;
+            try {
+                curLine = skip(reader, NETTokens.NODES);
+            } catch (Exception e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
 
             if (curLine == null) // no vertices in the graph; return empty graph
             {
@@ -121,9 +62,9 @@ public class NETReader {
             }
 
             // create appropriate number of vertices
-            StringTokenizer stringTokenizer = new StringTokenizer(curLine);
-            stringTokenizer.nextToken(); // skip past "*vertices";
-            int num_vertices = Integer.parseInt(stringTokenizer.nextToken());
+            StringTokenizer st = new StringTokenizer(curLine);
+            st.nextToken(); // skip past "*vertices";
+            int num_vertices = Integer.parseInt(st.nextToken());
             for (int i = 0; i < num_vertices; i++) {
                 String label = "" + (i + 1);
                 Vertex node = graph.addVertex(label);
@@ -158,31 +99,10 @@ public class NETReader {
 
             //Get edges
             readArcsOrEdges(curLine, reader);
-
             reader.close();
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
+            throw new IOException("NET malformed", e);
         }
-
-        if (graph instanceof TransactionalGraph) {
-            ((TransactionalGraph) graph).setMaxBufferSize(previousMaxBufferSize);
-        }
-
-    }
-
-    private String skip(BufferedReader br, String str) throws Exception {
-        while (br.ready()) {
-            String curLine = br.readLine();
-            if (curLine == null) {
-                break;
-            }
-            curLine = curLine.trim();
-            if (curLine.toLowerCase().startsWith(str)) {
-                return curLine;
-            }
-        }
-        return null;
     }
 
     private void readVertex(String curLine, int num_vertices) throws Exception {
@@ -363,5 +283,19 @@ public class NETReader {
             return graph.addVertex(id);
         }
         return graph.getVertex(id);
+    }
+
+    private String skip(BufferedReader br, String str) throws Exception {
+        while (br.ready()) {
+            String curLine = br.readLine();
+            if (curLine == null) {
+                break;
+            }
+            curLine = curLine.trim();
+            if (curLine.toLowerCase().startsWith(str)) {
+                return curLine;
+            }
+        }
+        return null;
     }
 }

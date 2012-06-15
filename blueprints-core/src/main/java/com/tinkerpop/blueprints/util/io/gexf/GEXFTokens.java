@@ -1,4 +1,4 @@
-package com.tinkerpop.blueprints.pgm.util.io.gexf;
+package com.tinkerpop.blueprints.util.io.gexf;
 
 /**
  * A reader for the Gephi Format (GEXF).

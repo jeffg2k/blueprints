@@ -1,4 +1,4 @@
-package com.tinkerpop.blueprints.pgm.util.io.net;
+package com.tinkerpop.blueprints.util.io.net;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -163,5 +163,10 @@ public class NETTokens {
         }
         return colorName;
     }
+
+    /**
+     * Special token used to store Blueprint ids as they may not be integers
+     */
+    public static final String BLUEPRINTS_ID = "blueprintsId";
 
 }

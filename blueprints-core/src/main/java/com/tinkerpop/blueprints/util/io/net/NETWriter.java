@@ -1,11 +1,8 @@
-package com.tinkerpop.blueprints.pgm.util.io.net;
+package com.tinkerpop.blueprints.util.io.net;
 
-import com.tinkerpop.blueprints.pgm.Edge;
-import com.tinkerpop.blueprints.pgm.Element;
-import com.tinkerpop.blueprints.pgm.Graph;
-import com.tinkerpop.blueprints.pgm.Vertex;
-import com.tinkerpop.blueprints.pgm.util.io.LexicographicalElementComparator;
-import com.tinkerpop.blueprints.pgm.util.io.gml.GMLTokens;
+import com.tinkerpop.blueprints.*;
+import com.tinkerpop.blueprints.util.io.LexicographicalElementComparator;
+import com.tinkerpop.blueprints.util.io.gml.GMLTokens;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -58,14 +55,14 @@ public class NETWriter {
     }
 
     /**
-     * @param vertexIdKey gml property to use for the blueprints vertex id, defaults to {@link com.tinkerpop.blueprints.pgm.util.io.gml.GMLTokens#BLUEPRINTS_ID}
+     * @param vertexIdKey net property to use for the blueprints vertex id, defaults to {@link com.tinkerpop.blueprints.util.io.net.NETTokens#BLUEPRINTS_ID}
      */
     public void setVertexIdKey(String vertexIdKey) {
         this.vertexIdKey = vertexIdKey;
     }
 
     /**
-     * @param edgeIdKey gml property to use for the blueprints edges id, defaults to {@link com.tinkerpop.blueprints.pgm.util.io.gml.GMLTokens#BLUEPRINTS_ID}
+     * @param edgeIdKey net property to use for the blueprints edges id, defaults to {@link com.tinkerpop.blueprints.util.io.net.NETTokens#BLUEPRINTS_ID}
      */
     public void setEdgeIdKey(String edgeIdKey) {
         this.edgeIdKey = edgeIdKey;
@@ -139,7 +136,7 @@ public class NETWriter {
 
     private void writeEdges(Writer writer, List<Edge> edges, Map<Vertex, Integer> ids) throws IOException {
         for (Edge e : edges) {
-            writeEdgeProperties(writer, e, ids.get(e.getOutVertex()), ids.get(e.getInVertex()));
+            writeEdgeProperties(writer, e, ids.get(e.getVertex(Direction.OUT)), ids.get(e.getVertex(Direction.IN)));
         }
     }
 

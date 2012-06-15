@@ -1,4 +1,4 @@
-package com.tinkerpop.blueprints.pgm.util.io.tlp;
+package com.tinkerpop.blueprints.util.io.tlp;
 
 /**
  * A collection of tokens used for TLP related data.

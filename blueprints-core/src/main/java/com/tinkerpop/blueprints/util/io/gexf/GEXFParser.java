@@ -1,122 +1,43 @@
-package com.tinkerpop.blueprints.pgm.util.io.gexf;
+package com.tinkerpop.blueprints.util.io.gexf;
 
-import com.tinkerpop.blueprints.pgm.Edge;
-import com.tinkerpop.blueprints.pgm.Graph;
-import com.tinkerpop.blueprints.pgm.TransactionalGraph;
-import com.tinkerpop.blueprints.pgm.Vertex;
-import com.tinkerpop.blueprints.pgm.util.io.BlueprintsTokens;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Graph;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.util.io.BlueprintsTokens;
 
 import javax.xml.stream.*;
 import javax.xml.stream.events.XMLEvent;
 import java.awt.*;
-import java.io.*;
-import java.nio.charset.Charset;
+import java.io.BufferedReader;
 
-/**
- * A reader for the Gephi Format (GEXF).
- * <p/>
- * GEXF definition taken from
- * (http://gexf.net/format/)
- * <p/>
- *
- * @author Jeff Gentes
- * @author Mathieu Bastian <mathieu.bastian@gephi.org> Templated Gephi GEXFImporter
- */
-public class GEXFReader {
-    public static final String DEFAULT_LABEL = "undefined";
-
-    private static final int DEFAULT_BUFFER_SIZE = 1000;
-
-    private final Graph graph;
+public class GEXFParser {
 
     private final String defaultEdgeLabel;
 
+    private final Graph graph;
+
+    private final String vertexIdKey;
+
+    private final String edgeIdKey;
+
+    private final String edgeLabelKey;
+
     private boolean directed = false;
-
-    private int edgeCount = 0;
-
-    //Architecture
-    private Reader reader;
     private boolean cancel;
     private XMLStreamReader xmlReader;
 
-    /**
-     * Create a new GEXF reader
-     * <p/>
-     * (Uses default edge label DEFAULT_LABEL)
-     *
-     * @param graph the graph to load data into
-     */
-    public GEXFReader(Graph graph) {
-        this(graph, DEFAULT_LABEL);
-    }
 
-    /**
-     * Create a new GEXF reader
-     *
-     * @param graph            the graph to load data into
-     * @param defaultEdgeLabel the default edge label to be used if the GEXF edge does not define a label
-     */
-    public GEXFReader(Graph graph, String defaultEdgeLabel) {
+    public GEXFParser(final Graph graph, final String defaultEdgeLabel, final String vertexIdKey, final String edgeIdKey,
+                     final String edgeLabelKey) {
         this.graph = graph;
+        this.vertexIdKey = vertexIdKey;
+        this.edgeIdKey = edgeIdKey;
+        this.edgeLabelKey = edgeLabelKey;
         this.defaultEdgeLabel = defaultEdgeLabel;
     }
 
-    /**
-     * Read the GEXF from from the stream.
-     * <p/>
-     * If the file is malformed incomplete data can be loaded.
-     *
-     * @param inputStream
-     * @throws java.io.IOException
-     */
-    public void inputGraph(InputStream inputStream) throws IOException {
-        inputGraph(inputStream, DEFAULT_BUFFER_SIZE);
-    }
-
-
-    /**
-     * Load the GEXF file into the Graph.
-     *
-     * @param graph       to receive the data
-     * @param inputStream GEXF file
-     * @throws IOException thrown if the data is not valid
-     */
-    public static void inputGraph(Graph graph, InputStream inputStream) throws IOException {
-        inputGraph(graph, inputStream, DEFAULT_LABEL);
-    }
-
-    /**
-     * Load the GEXF file into the Graph.
-     *
-     * @param graph            to receive the data
-     * @param inputStream      GEXF file
-     * @param defaultEdgeLabel default edge label to be used if not defined in the data
-     * @throws IOException thrown if the data is not valid
-     */
-    public static void inputGraph(Graph graph, InputStream inputStream, String defaultEdgeLabel) throws IOException {
-        new GEXFReader(graph, defaultEdgeLabel).inputGraph(inputStream, DEFAULT_BUFFER_SIZE);
-    }
-
-    /**
-     * Read the GEXF from from the stream.
-     * <p/>
-     * If the file is malformed incomplete data can be loaded.
-     *
-     * @param inputStream
-     * @throws IOException
-     */
-    public void inputGraph(InputStream inputStream, int bufferSize) throws IOException {
-        int previousMaxBufferSize = 0;
-        if (graph instanceof TransactionalGraph) {
-            previousMaxBufferSize = ((TransactionalGraph) graph).getMaxBufferSize();
-            ((TransactionalGraph) graph).setMaxBufferSize(bufferSize);
-        }
-
-        reader = new BufferedReader(new InputStreamReader(inputStream, Charset.forName("ISO-8859-1")));
-
+    public void parse(BufferedReader reader) {
         try {
-
             XMLInputFactory inputFactory = XMLInputFactory.newInstance();
             if (inputFactory.isPropertySupported("javax.xml.stream.isValidating")) {
                 inputFactory.setProperty("javax.xml.stream.isValidating", Boolean.FALSE);
@@ -153,10 +74,6 @@ public class GEXFReader {
                 }
             }
             xmlReader.close();
-            if (graph instanceof TransactionalGraph) {
-                ((TransactionalGraph) graph).setMaxBufferSize(previousMaxBufferSize);
-            }
-
         } catch (Exception e) {
             if (e instanceof RuntimeException) {
                 throw (RuntimeException) e;
@@ -372,8 +289,8 @@ public class GEXFReader {
         }
 
         if (!xStr.isEmpty()) {
-           float x = Float.parseFloat(xStr);
-           node.setProperty(BlueprintsTokens.X, x);
+            float x = Float.parseFloat(xStr);
+            node.setProperty(BlueprintsTokens.X, x);
         }
         if (!yStr.isEmpty()) {
             float y = Float.parseFloat(yStr);
@@ -390,12 +307,9 @@ public class GEXFReader {
         if (GEXFTokens.SIZE.equalsIgnoreCase(attName)) {
             String sizeStr = reader.getAttributeValue(0);
             if (!sizeStr.isEmpty()) {
-               float size = Float.parseFloat(sizeStr);
-               node.setProperty(BlueprintsTokens.SIZE, size);
+                float size = Float.parseFloat(sizeStr);
+                node.setProperty(BlueprintsTokens.SIZE, size);
             }
         }
     }
 }
-
-
-

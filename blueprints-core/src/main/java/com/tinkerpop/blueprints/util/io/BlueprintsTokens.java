@@ -1,4 +1,4 @@
-package com.tinkerpop.blueprints.pgm.util.io;
+package com.tinkerpop.blueprints.util.io;
 
 /**
  * Generic Tokens for Translating between different

@@ -1,33 +1,15 @@
-package com.tinkerpop.blueprints.pgm.util.io.dot;
+package com.tinkerpop.blueprints.util.io.dot;
 
-import com.tinkerpop.blueprints.pgm.Edge;
-import com.tinkerpop.blueprints.pgm.Graph;
-import com.tinkerpop.blueprints.pgm.TransactionalGraph;
-import com.tinkerpop.blueprints.pgm.Vertex;
-import com.tinkerpop.blueprints.pgm.util.io.BlueprintsTokens;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Graph;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.util.io.BlueprintsTokens;
 
 import java.awt.*;
-import java.io.*;
-import java.nio.charset.Charset;
+import java.io.IOException;
+import java.io.StreamTokenizer;
 
-/**
- * A reader for the GraphViz Format (DOT).
- * <p/>
- * DOT definition taken from
- * (http://www.graphviz.org/pub/scm/graphviz2/doc/info/lang.html)
- * <p/>
- *
- * @author Jeff Gentes
- * @author Stuart Hendren (http://stuarthendren.net) Templated Blueprint GMLParser
- * @author Mathieu Bastian <mathieu.bastian@gephi.org> Templated Gephi DOTImporter
- */
-
-public class DOTReader {
-    public static final String DEFAULT_LABEL = "undefined";
-
-    private static final int DEFAULT_BUFFER_SIZE = 1000;
-
-    private final Graph graph;
+public class DOTParser {
 
     private final String defaultEdgeLabel;
 
@@ -35,111 +17,22 @@ public class DOTReader {
 
     private int edgeCount = 0;
 
-    /**
-     * Create a new DOT reader
-     * <p/>
-     * (Uses default edge label DEFAULT_LABEL)
-     *
-     * @param graph the graph to load data into
-     */
-    public DOTReader(Graph graph) {
-        this(graph, DEFAULT_LABEL);
-    }
+    private final Graph graph;
 
-    /**
-     * Create a new DOT reader
-     *
-     * @param graph            the graph to load data into
-     * @param defaultEdgeLabel the default edge label to be used if the DOT edge does not define a label
-     */
-    public DOTReader(Graph graph, String defaultEdgeLabel) {
+    private final String vertexIdKey;
+
+    private final String edgeIdKey;
+
+    private final String edgeLabelKey;
+
+
+    public DOTParser(final Graph graph, final String defaultEdgeLabel, final String vertexIdKey, final String edgeIdKey,
+                     final String edgeLabelKey) {
         this.graph = graph;
+        this.vertexIdKey = vertexIdKey;
+        this.edgeIdKey = edgeIdKey;
+        this.edgeLabelKey = edgeLabelKey;
         this.defaultEdgeLabel = defaultEdgeLabel;
-    }
-
-    /**
-     * Read the DOT from from the stream.
-     * <p/>
-     * If the file is malformed incomplete data can be loaded.
-     *
-     * @param inputStream
-     * @throws IOException
-     */
-    public void inputGraph(InputStream inputStream) throws IOException {
-        inputGraph(inputStream, DEFAULT_BUFFER_SIZE);
-    }
-
-
-    /**
-     * Load the DOT file into the Graph.
-     *
-     * @param graph       to receive the data
-     * @param inputStream DOT file
-     * @throws IOException thrown if the data is not valid
-     */
-    public static void inputGraph(Graph graph, InputStream inputStream) throws IOException {
-        inputGraph(graph, inputStream, DEFAULT_LABEL);
-    }
-
-    /**
-     * Load the DOT file into the Graph.
-     *
-     * @param graph            to receive the data
-     * @param inputStream      DOT file
-     * @param defaultEdgeLabel default edge label to be used if not defined in the data
-     * @throws IOException thrown if the data is not valid
-     */
-    public static void inputGraph(Graph graph, InputStream inputStream, String defaultEdgeLabel) throws IOException {
-        new DOTReader(graph, defaultEdgeLabel).inputGraph(inputStream, DEFAULT_BUFFER_SIZE);
-    }
-
-    /**
-     * Read the DOT from from the stream.
-     * <p/>
-     * If the file is malformed incomplete data can be loaded.
-     *
-     * @param inputStream
-     * @throws IOException
-     */
-    public void inputGraph(InputStream inputStream, int bufferSize) throws IOException {
-        int previousMaxBufferSize = 0;
-        if (graph instanceof TransactionalGraph) {
-            previousMaxBufferSize = ((TransactionalGraph) graph).getMaxBufferSize();
-            ((TransactionalGraph) graph).setMaxBufferSize(bufferSize);
-        }
-
-        Reader r = new BufferedReader(new InputStreamReader(inputStream, Charset.forName("ISO-8859-1")));
-        StreamTokenizer st = new StreamTokenizer(r);
-
-        try {
-            st.resetSyntax();
-            st.eolIsSignificant(false);
-            st.slashStarComments(true);
-            st.slashSlashComments(true);
-            st.whitespaceChars(0, ' ');
-            st.wordChars(' ' + 1, '\u00ff');
-            st.ordinaryChar('[');
-            st.ordinaryChar(']');
-            st.ordinaryChar('{');
-            st.ordinaryChar('}');
-            st.ordinaryChar('-');
-            st.ordinaryChar('>');
-            st.ordinaryChar('/');
-            st.ordinaryChar('*');
-            st.ordinaryChar(',');
-            st.quoteChar('"');
-            st.whitespaceChars(';', ';');
-            st.ordinaryChar('=');
-
-            parse(st);
-
-            if (graph instanceof TransactionalGraph) {
-                ((TransactionalGraph) graph).setMaxBufferSize(previousMaxBufferSize);
-            }
-        } catch (IOException e) {
-            throw new IOException(error(st), e);
-        }
-
     }
 
     private boolean hasNext(StreamTokenizer st) throws IOException {
@@ -154,7 +47,7 @@ public class DOTReader {
         return type != StreamTokenizer.TT_EOL;
     }
 
-    private void parse(StreamTokenizer st) throws IOException {
+    public void parse(StreamTokenizer st) throws IOException {
         while (st.nextToken() != StreamTokenizer.TT_EOF) {
             if (st.ttype == StreamTokenizer.TT_WORD) {
                 if (st.sval.equalsIgnoreCase(DOTTokens.DIRECTED) || st.sval.equalsIgnoreCase(DOTTokens.GRAPH)) {
